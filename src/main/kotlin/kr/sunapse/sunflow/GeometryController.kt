@@ -1,5 +1,6 @@
 package kr.sunapse.sunflow
 
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
@@ -7,6 +8,11 @@ import kotlin.math.round
 
 @RestController
 class GeometryController(private val geometryService: GeometryService) {
+
+    @GetMapping("/", "/hello")
+    fun heathCheck(): Boolean {
+        return true
+    }
 
     @PostMapping("/geometry/search")
     fun getGeometry(@RequestBody request: GeometrySearchBody): GeometryResponse {
