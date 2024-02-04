@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.springframework.boot.gradle.tasks.bundling.BootJar
 
 plugins {
     id("org.springframework.boot") version "3.2.2"
@@ -42,3 +43,13 @@ tasks.withType<KotlinCompile> {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+// for heroku
+tasks.getByName<BootJar>("bootJar") {
+    destinationDirectory = file("./target") //gradle build 시 jar 파일이 생성되는 파일명 및 위치를 설정한다.
+    archiveBaseName = "sunflow"
+    archiveFileName = "sunflow.jar" //jar파일명
+    archiveVersion = "0.0.1"
+}
+
+
