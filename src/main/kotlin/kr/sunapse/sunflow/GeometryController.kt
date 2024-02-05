@@ -202,7 +202,7 @@ class GeometryResponse(
                     ),
                     optInstall = optInstallInfo ?: InstallInfo(),
                     isInstallRequired = optInstallInfo != null,
-                    gltfUrl = geometry.gltfUrl
+                    gltfUrl = geometry.gltfUrl ?: ""
             )
         }
     }

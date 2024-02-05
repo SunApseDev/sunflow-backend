@@ -44,7 +44,7 @@ data class Geometry(
 //        val eUseE : String?,
 //        val eUseE : String?,
         @Column(name = "gltf_url")
-        val gltfUrl: String,
+        val gltfUrl: String?,
         @Column(name = "pv_r_area")
         val pvRArea: Double?,
         @Column(name = "pv_s_area")
