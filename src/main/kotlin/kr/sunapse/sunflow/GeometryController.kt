@@ -5,6 +5,9 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 import kotlin.math.round
+import kotlin.math.roundToInt
+
+fun Double.setScale(): Double = (this * 100).roundToInt() / 100.0
 
 @RestController
 class GeometryController(private val geometryService: GeometryService) {
@@ -46,7 +49,7 @@ class GeometryResponse(
         val maxInstall: InstallInfo,
         val optInstall: InstallInfo,
         val gltfUrl: String = "",
-        val requiredRatio  : Double,
+        val requiredRatio: Double,
 ) {
 
     constructor() : this(isInstallRequired = false,
@@ -82,10 +85,10 @@ class GeometryResponse(
 
                     val pvRCap = round(expectedRequiredEnergyProduce / (1358 * 0.95))
                     InstallInfo(
-                            pvRGenC = expectedRequiredEnergyProduce,
-                            pvRCap = pvRCap,
-                            pvRArea = pvRCap * 1.134 * 2.092 / 0.5,
-                            ratioR = requiredRatio
+                            pvRGenC = expectedRequiredEnergyProduce.setScale(),
+                            pvRCap = pvRCap.setScale(),
+                            pvRArea = (pvRCap * 1.134 * 2.092 / 0.5).setScale(),
+                            ratioR = (requiredRatio * 100).setScale()
                     )
                 }
 
@@ -94,11 +97,11 @@ class GeometryResponse(
                         ?: 0.0) + (geometry.pvSGenC ?: 0.0))) -> {
 
                     val pvSGenC = expectedRequiredEnergyProduce - (geometry.pvRGenC ?: 0.0)
-                    val pvSCap = round(pvSGenC / (923 * 6.12))
+                    val pvSCap = pvSGenC / (923 * 6.12)
                     val pvSArea = pvSCap * 1.06 * 1.06 / 0.16
-                    val ratioS = requiredRatio - ((geometry.pvRGenC ?: 0.0) / expectedEnergyUse * 100)
+                    val ratioS = requiredRatio * 100 - ((geometry.pvRGenC ?: 0.0) / expectedEnergyUse * 100)
 
-                    InstallInfo(pvSGenC = pvSGenC, pvSCap = pvSCap, pvSArea = pvSArea, ratioS = ratioS)
+                    InstallInfo(pvSGenC = pvSGenC.setScale(), pvSCap = pvSCap.setScale(), pvSArea = pvSArea.setScale(), ratioS = ratioS.setScale())
 
                 }
 
@@ -109,24 +112,24 @@ class GeometryResponse(
                             ?: 0.0)
                     val pvECap = round(pvEGenC / (923 * 6.12))
                     val pEArea = pvECap * 1.06 * 1.06 / 0.16
-                    val ratioE = requiredRatio - ((geometry.pvRGenC ?: 0.0) + (geometry.pvSGenC
+                    val ratioE = requiredRatio * 100 - ((geometry.pvRGenC ?: 0.0) + (geometry.pvSGenC
                             ?: 0.0)) / expectedEnergyUse * 100
 
                     InstallInfo(
-                            pvEGenC = pvEGenC,
-                            pvECap = pvECap,
-                            pvEArea = pEArea,
-                            ratioE = ratioE,
+                            pvEGenC = pvEGenC.setScale(),
+                            pvECap = pvECap.setScale(),
+                            pvEArea = pEArea.setScale(),
+                            ratioE = ratioE.setScale(),
 
-                            pvRArea = geometry.pvRArea ?: 0.0,
-                            pvRCap = geometry.pvRCap ?: 0.0,
-                            pvRGenC = geometry.pvRGenC ?: 0.0,
-                            ratioR = ((geometry.pvRGenC ?: 0.0) / expectedEnergyUse) * 100,
+                            pvRArea = geometry.pvRArea?.setScale() ?: 0.0,
+                            pvRCap = geometry.pvRCap?.setScale() ?: 0.0,
+                            pvRGenC = geometry.pvRGenC?.setScale() ?: 0.0,
+                            ratioR = (((geometry.pvRGenC ?: 0.0) / expectedEnergyUse) * 100).setScale(),
 
-                            pvSArea = geometry.pvSArea ?: 0.0,
-                            pvSCap = geometry.pvSCap ?: 0.0,
-                            pvSGenC = geometry.pvSGenC ?: 0.0,
-                            ratioS = ((geometry.pvSGenC ?: 0.0) / expectedEnergyUse) * 100
+                            pvSArea = geometry.pvSArea?.setScale() ?: 0.0,
+                            pvSCap = geometry.pvSCap?.setScale() ?: 0.0,
+                            pvSGenC = geometry.pvSGenC?.setScale() ?: 0.0,
+                            ratioS = (((geometry.pvSGenC ?: 0.0) / expectedEnergyUse) * 100).setScale()
                     )
                 }
 
@@ -138,29 +141,29 @@ class GeometryResponse(
                             ?: 0.0) - (geometry.pvEGenC ?: 0.0) - (geometry.pvWGenC ?: 0.0)
                     val pvWCap = round(pvWGenC / (923 * 6.12))
                     val pvWArea = pvWCap * 1.06 * 1.06 / 0.16
-                    val ratioW = requiredRatio - ((geometry.pvRGenC ?: 0.0) + (geometry.pvSGenC
+                    val ratioW = requiredRatio * 100 - ((geometry.pvRGenC ?: 0.0) + (geometry.pvSGenC
                             ?: 0.0) + (geometry.pvEGenC ?: 0.0)) / expectedEnergyUse * 100
 
                     InstallInfo(
-                            pvRArea = (geometry.pvRArea ?: 0.0),
-                            pvRCap = (geometry.pvRCap ?: 0.0),
-                            pvRGenC = (geometry.pvRGenC ?: 0.0),
-                            ratioR = ((geometry.pvRGenC ?: 0.0) / expectedEnergyUse) * 100,
+                            pvRArea = (geometry.pvRArea ?: 0.0).setScale(),
+                            pvRCap = (geometry.pvRCap ?: 0.0).setScale(),
+                            pvRGenC = (geometry.pvRGenC ?: 0.0).setScale(),
+                            ratioR = (((geometry.pvRGenC ?: 0.0) / expectedEnergyUse) * 100).setScale(),
 
-                            pvSArea = (geometry.pvSArea ?: 0.0),
-                            pvSCap = geometry.pvSCap ?: 0.0,
-                            pvSGenC = geometry.pvSGenC ?: 0.0,
-                            ratioS = ((geometry.pvSGenC ?: 0.0) / expectedEnergyUse) * 100,
+                            pvSArea = (geometry.pvSArea ?: 0.0).setScale(),
+                            pvSCap = (geometry.pvSCap ?: 0.0).setScale(),
+                            pvSGenC = (geometry.pvSGenC ?: 0.0).setScale(),
+                            ratioS = (((geometry.pvSGenC ?: 0.0) / expectedEnergyUse) * 100).setScale(),
 
-                            pvEArea = (geometry.pvEArea ?: 0.0),
-                            pvECap = (geometry.pvECap ?: 0.0),
-                            pvEGenC = (geometry.pvEGenC ?: 0.0),
-                            ratioE = ((geometry.pvEGenC ?: 0.0) / expectedEnergyUse) * 100,
+                            pvEArea = (geometry.pvEArea ?: 0.0).setScale(),
+                            pvECap = (geometry.pvECap ?: 0.0).setScale(),
+                            pvEGenC = (geometry.pvEGenC ?: 0.0).setScale(),
+                            ratioE = (((geometry.pvEGenC ?: 0.0) / expectedEnergyUse) * 100).setScale(),
 
-                            pvWGenC = pvWGenC,
-                            pvWCap = pvWCap,
-                            pvWArea = pvWArea,
-                            ratioW = ratioW
+                            pvWGenC = pvWGenC.setScale(),
+                            pvWCap = pvWCap.setScale(),
+                            pvWArea = pvWArea.setScale(),
+                            ratioW = ratioW.setScale()
 
                     )
                 }
@@ -178,35 +181,35 @@ class GeometryResponse(
 
             return GeometryResponse(
                     id = geometry.id,
-                    totArea = geometry.totArea,
+                    totArea = geometry.totArea.setScale(),
                     bldUse = geometry.bldUse,
                     jusoOld = geometry.jusoOld,
                     jusoNew = geometry.jusoNew,
                     bldName = geometry.bldNm,
-                    bldH = geometry.bldH,
-                    sedae = geometry.sedae,
+                    bldH = geometry.bldH.setScale(),
+                    sedae = geometry.sedae.setScale(),
                     maxInstall = if (optInstallInfo == null) InstallInfo() else InstallInfo(
-                            pvRArea = geometry.pvRArea ?: 0.0,
-                            pvSArea = geometry.pvSArea ?: 0.0,
-                            pvEArea = geometry.pvEArea ?: 0.0,
-                            pvWArea = geometry.pvWArea ?: 0.0,
-                            pvRCap = geometry.pvRCap ?: 0.0,
-                            pvSCap = geometry.pvSCap ?: 0.0,
-                            pvECap = geometry.pvECap ?: 0.0,
-                            pvWCap = geometry.pvWCap ?: 0.0,
-                            pvRGenC = geometry.pvRGenC ?: 0.0,
-                            pvSGenC = geometry.pvSGenC ?: 0.0,
-                            pvEGenC = geometry.pvEGenC ?: 0.0,
-                            pvWGenC = geometry.pvWGenC ?: 0.0,
-                            ratioR = (geometry.pvRGenC ?: 0.0) / expectedEnergyUse * 100,
-                            ratioS = (geometry.pvSGenC ?: 0.0) / expectedEnergyUse * 100,
-                            ratioE = (geometry.pvEGenC ?: 0.0) / expectedEnergyUse * 100,
-                            ratioW = (geometry.pvWGenC ?: 0.0) / expectedEnergyUse * 100
+                            pvRArea = geometry.pvRArea?.setScale() ?: 0.0,
+                            pvSArea = geometry.pvSArea?.setScale() ?: 0.0,
+                            pvEArea = geometry.pvEArea?.setScale() ?: 0.0,
+                            pvWArea = geometry.pvWArea?.setScale() ?: 0.0,
+                            pvRCap = geometry.pvRCap?.setScale() ?: 0.0,
+                            pvSCap = geometry.pvSCap?.setScale() ?: 0.0,
+                            pvECap = geometry.pvECap?.setScale() ?: 0.0,
+                            pvWCap = geometry.pvWCap?.setScale() ?: 0.0,
+                            pvRGenC = geometry.pvRGenC?.setScale() ?: 0.0,
+                            pvSGenC = geometry.pvSGenC?.setScale() ?: 0.0,
+                            pvEGenC = geometry.pvEGenC?.setScale() ?: 0.0,
+                            pvWGenC = geometry.pvWGenC?.setScale() ?: 0.0,
+                            ratioR = ((geometry.pvRGenC ?: 0.0) / expectedEnergyUse * 100).setScale(),
+                            ratioS = ((geometry.pvSGenC ?: 0.0) / expectedEnergyUse * 100).setScale(),
+                            ratioE = ((geometry.pvEGenC ?: 0.0) / expectedEnergyUse * 100).setScale(),
+                            ratioW = ((geometry.pvWGenC ?: 0.0) / expectedEnergyUse * 100).setScale()
                     ),
                     optInstall = optInstallInfo ?: InstallInfo(),
                     isInstallRequired = optInstallInfo != null,
                     gltfUrl = geometry.gltfUrl ?: "",
-                    requiredRatio = requiredRatio,
+                    requiredRatio = (requiredRatio * 100).setScale(),
             )
         }
     }
@@ -229,5 +232,4 @@ data class InstallInfo(
         val ratioS: Double = 0.0,
         val ratioE: Double = 0.0,
         val ratioW: Double = 0.0
-
 )
