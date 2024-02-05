@@ -45,7 +45,8 @@ class GeometryResponse(
         val sedae: Double,
         val maxInstall: InstallInfo,
         val optInstall: InstallInfo,
-        val gltfUrl: String = ""
+        val gltfUrl: String = "",
+        val requiredRatio  : Double,
 ) {
 
     constructor() : this(isInstallRequired = false,
@@ -59,7 +60,9 @@ class GeometryResponse(
             sedae = 0.0,
             maxInstall = InstallInfo(),
             optInstall = InstallInfo(),
-            gltfUrl = "")
+            gltfUrl = "",
+            requiredRatio = 0.0
+    )
 
     companion object {
         fun of(geometry: Geometry): GeometryResponse {
@@ -202,7 +205,8 @@ class GeometryResponse(
                     ),
                     optInstall = optInstallInfo ?: InstallInfo(),
                     isInstallRequired = optInstallInfo != null,
-                    gltfUrl = geometry.gltfUrl ?: ""
+                    gltfUrl = geometry.gltfUrl ?: "",
+                    requiredRatio = requiredRatio,
             )
         }
     }
