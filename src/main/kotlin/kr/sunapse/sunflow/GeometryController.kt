@@ -161,10 +161,16 @@ class GeometryResponse(
                     val pvSArea = (pvSCap * 1.06 * 1.06 / 0.16).rounding(scale = 0) // a2
                     val ratioS = requiredRatio - ((geometry.pvRGenC ?: 0.0) / expectedEnergyUse) // d2
 
-                    InstallInfo(pvSGenC = pvSGenC.rounding(),
+                    InstallInfo(
+                            pvRGenC = geometry.pvRGenC?.rounding()?:0.0,
+                            pvRCap = geometry.pvRCap?.rounding()?:0.0,
+                            pvRArea = geometry.pvRArea?.rounding()?:0.0,
+                            ratioR = ((geometry.pvRGenC ?: 0.0) / expectedEnergyUse * 100).rounding(),
+
+                            pvSGenC = pvSGenC.rounding(),
                             pvSCap = pvSCap.rounding(),
                             pvSArea = pvSArea.rounding(), // a2
-                            ratioS = ratioS.rounding()) // d2
+                            ratioS = (ratioS * 100).rounding()) // d2
 
                 }
 
