@@ -368,45 +368,45 @@ data class InstallInfo(
 
 
 class GeometryEconomicsInfo(
-        pvL1: Long = 0,
-        bipvL1: Long = 0,
-//        sumL1: Long = 0,
-        bipvL2: Long = 0,
-//        sumL2: Long = 0,
-        bipvL3: Long = 0,
-//        sumL3: Long = 0,
-        pvR: Long = 0,
-        bipvR: Long = 0,
-//        sumR: Long = 0,
+        val pvL1: Long = 0,
+        val bipvL1: Long = 0,
+
+        val bipvL2: Long = 0,
+
+        val bipvL3: Long = 0,
+
+        val pvR: Long = 0,
+        val bipvR: Long = 0,
+
         // 예상 발전량
-        pvC: Double = 0.0,
-        bipvC: Double = 0.0,
-//        sumC: Double = 0.0,
+        val pvC: Double = 0.0,
+        val bipvC: Double = 0.0,
+
         // SMP
-        pvSMP: Long = 0,
-        bipvSMP: Long = 0,
-//        sumSMP: Long = 0,
+        val pvSMP: Long = 0,
+        val bipvSMP: Long = 0,
+
         // REC
-        pvREC: Long = 0,
-        bipvREC: Long = 0,
-//        sumREC: Long = 0,
+        val pvREC: Long = 0,
+        val bipvREC: Long = 0,
+
         // 전력생산절감비
-        pvSaving: Long = 0,
-        bipvSaving: Long = 0,
-//        sumSaving: Long = 0,
+        val pvSaving: Long = 0,
+        val bipvSaving: Long = 0,
+
         // 유지관리비
-        pvManage: Long = 0,
-        bipvManage: Long = 0,
+        val pvManage: Long = 0,
+        val bipvManage: Long = 0,
         // 연별수익
-        pvRevenue: Long = 0,
-        bipvRevenue: Long = 0,
-//        sumRevenue: Long = 0,
+        val pvRevenue: Long = 0,
+        val bipvRevenue: Long = 0,
+
         // ROI
-        pvROI: Long = 0,
-        bipvROI: Long = 0,
-        sumROI: Long = 0,
+        val pvROI: Long = 0,
+        val bipvROI: Long = 0,
+        val sumROI: Long = 0,
+
         // 이윤
-        pvMargin10y: Long = 0,
-        bipvMargin10y: Long = 0,
-//        sumMargin10y: Long = 0
+        val pvMargin10y: Long = 0,
+        val bipvMargin10y: Long = 0,
 )
