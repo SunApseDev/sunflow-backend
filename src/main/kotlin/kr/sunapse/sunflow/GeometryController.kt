@@ -4,10 +4,19 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
+import kotlin.math.pow
 import kotlin.math.round
 import kotlin.math.roundToInt
 
-fun Double.setScale(): Double = (this * 100).roundToInt() / 100.0
+fun Double.rounding(scale: Long = 1): Double {
+    if (scale == 0L) {
+        return this.roundToInt().toDouble()
+    }
+
+    val scaleNumber = (10.0).pow(scale.toDouble())
+
+    return (this * scaleNumber).roundToInt() / scaleNumber
+}
 
 @RestController
 class GeometryController(private val geometryService: GeometryService) {
@@ -69,9 +78,11 @@ class GeometryResponse(
 
     companion object {
         fun of(geometry: Geometry): GeometryResponse {
+            // A
             val expectedEnergyUse = 230 * geometry.totArea
 
             // todo : 현재 비주거 케이스만 다뤘음. 공공과 주거에 대해서도 다뤄야함.
+            // B
             val requiredRatio: Double = when {
                 geometry.totArea >= 100000.0 -> 0.145
                 geometry.totArea >= 10000.0 -> 0.135
@@ -79,32 +90,38 @@ class GeometryResponse(
                 else -> 0.0
             }
 
+            // A * B
             val expectedRequiredEnergyProduce = expectedEnergyUse * requiredRatio
             val optInstallInfo: InstallInfo? = when {
+                // A*B < x
                 expectedRequiredEnergyProduce < (geometry.pvRGenC ?: 0.0) -> {
 
                     val pvRCap = round(expectedRequiredEnergyProduce / (1358 * 0.95))
                     InstallInfo(
-                            pvRGenC = expectedRequiredEnergyProduce.setScale(),
-                            pvRCap = pvRCap.setScale(),
-                            pvRArea = (pvRCap * 1.134 * 2.092 / 0.5).setScale(),
-                            ratioR = (requiredRatio * 100).setScale()
+                            pvRGenC = expectedRequiredEnergyProduce.rounding(),
+                            pvRCap = pvRCap.rounding(),
+                            pvRArea = (pvRCap * 1.134 * 2.092 / 0.5).rounding(scale = 0),
+                            ratioR = (requiredRatio * 100).rounding()
                     )
                 }
-
+                // x <= A*B < x+y
                 ((geometry.pvRGenC
                         ?: 0.0) <= expectedRequiredEnergyProduce) && (expectedRequiredEnergyProduce < ((geometry.pvRGenC
                         ?: 0.0) + (geometry.pvSGenC ?: 0.0))) -> {
 
                     val pvSGenC = expectedRequiredEnergyProduce - (geometry.pvRGenC ?: 0.0)
                     val pvSCap = pvSGenC / (923 * 6.12)
-                    val pvSArea = pvSCap * 1.06 * 1.06 / 0.16
-                    val ratioS = requiredRatio * 100 - ((geometry.pvRGenC ?: 0.0) / expectedEnergyUse * 100)
+                    val pvSArea = (pvSCap * 1.06 * 1.06 / 0.16).rounding(scale = 0) // a2
+                    val ratioS = requiredRatio - ((geometry.pvRGenC ?: 0.0) / expectedEnergyUse) // d2
 
-                    InstallInfo(pvSGenC = pvSGenC.setScale(), pvSCap = pvSCap.setScale(), pvSArea = pvSArea.setScale(), ratioS = ratioS.setScale())
+                    InstallInfo(pvSGenC = pvSGenC.rounding(),
+                            pvSCap = pvSCap.rounding(),
+                            pvSArea = pvSArea.rounding(), // a2
+                            ratioS = ratioS.rounding()) // d2
 
                 }
 
+                // x+y <= A*B < x+y+z
                 (((geometry.pvRGenC ?: 0.0) + (geometry.pvSGenC
                         ?: 0.0)) <= expectedRequiredEnergyProduce) && (expectedRequiredEnergyProduce < ((geometry.pvRGenC
                         ?: 0.0) + (geometry.pvSGenC ?: 0.0) + (geometry.pvEGenC ?: 0.0))) -> {
@@ -112,58 +129,68 @@ class GeometryResponse(
                             ?: 0.0)
                     val pvECap = round(pvEGenC / (923 * 6.12))
                     val pEArea = pvECap * 1.06 * 1.06 / 0.16
-                    val ratioE = requiredRatio * 100 - ((geometry.pvRGenC ?: 0.0) + (geometry.pvSGenC
-                            ?: 0.0)) / expectedEnergyUse * 100
+                    val ratioE = requiredRatio - ((geometry.pvRGenC ?: 0.0) + (geometry.pvSGenC
+                            ?: 0.0)) / expectedEnergyUse  // d2
 
                     InstallInfo(
-                            pvEGenC = pvEGenC.setScale(),
-                            pvECap = pvECap.setScale(),
-                            pvEArea = pEArea.setScale(),
-                            ratioE = ratioE.setScale(),
+                            pvEGenC = pvEGenC.rounding(),
+                            pvECap = pvECap.rounding(),
+                            pvEArea = pEArea.rounding(scale = 0), // a3
+                            ratioE = ratioE.rounding(), // d3
 
-                            pvRArea = geometry.pvRArea?.setScale() ?: 0.0,
-                            pvRCap = geometry.pvRCap?.setScale() ?: 0.0,
-                            pvRGenC = geometry.pvRGenC?.setScale() ?: 0.0,
-                            ratioR = (((geometry.pvRGenC ?: 0.0) / expectedEnergyUse) * 100).setScale(),
+                            // a1~d1 최대 설치시와 동일
+                            pvRArea = geometry.pvRArea?.rounding() ?: 0.0,
+                            pvRCap = geometry.pvRCap?.rounding() ?: 0.0,
+                            pvRGenC = geometry.pvRGenC?.rounding() ?: 0.0,
+                            ratioR = (((geometry.pvRGenC ?: 0.0) / expectedEnergyUse) * 100).rounding(),
 
-                            pvSArea = geometry.pvSArea?.setScale() ?: 0.0,
-                            pvSCap = geometry.pvSCap?.setScale() ?: 0.0,
-                            pvSGenC = geometry.pvSGenC?.setScale() ?: 0.0,
-                            ratioS = (((geometry.pvSGenC ?: 0.0) / expectedEnergyUse) * 100).setScale()
+                            // a2~d2 최대 설치시와 동일
+                            pvSArea = geometry.pvSArea?.rounding() ?: 0.0,
+                            pvSCap = geometry.pvSCap?.rounding() ?: 0.0,
+                            pvSGenC = geometry.pvSGenC?.rounding() ?: 0.0,
+                            ratioS = (((geometry.pvSGenC ?: 0.0) / expectedEnergyUse) * 100).rounding()
                     )
                 }
-
+                //  x+y+z <= A*B < x+y+z+w
                 (((geometry.pvRGenC ?: 0.0) + (geometry.pvSGenC ?: 0.0) + (geometry.pvEGenC
                         ?: 0.0)) <= expectedRequiredEnergyProduce) && (expectedRequiredEnergyProduce < ((geometry.pvRGenC
                         ?: 0.0) + (geometry.pvSGenC ?: 0.0) + (geometry.pvEGenC ?: 0.0) + (geometry.pvWGenC
                         ?: 0.0))) -> {
                     val pvWGenC = expectedRequiredEnergyProduce - (geometry.pvRGenC ?: 0.0) - (geometry.pvSGenC
-                            ?: 0.0) - (geometry.pvEGenC ?: 0.0) - (geometry.pvWGenC ?: 0.0)
+                            ?: 0.0) - (geometry.pvEGenC ?: 0.0)
                     val pvWCap = round(pvWGenC / (923 * 6.12))
+
+                    // a4
                     val pvWArea = pvWCap * 1.06 * 1.06 / 0.16
-                    val ratioW = requiredRatio * 100 - ((geometry.pvRGenC ?: 0.0) + (geometry.pvSGenC
-                            ?: 0.0) + (geometry.pvEGenC ?: 0.0)) / expectedEnergyUse * 100
+
+                    // d4
+                    val ratioW = requiredRatio - ((geometry.pvRGenC ?: 0.0) + (geometry.pvSGenC
+                            ?: 0.0) + (geometry.pvEGenC ?: 0.0)) / expectedEnergyUse
 
                     InstallInfo(
-                            pvRArea = (geometry.pvRArea ?: 0.0).setScale(),
-                            pvRCap = (geometry.pvRCap ?: 0.0).setScale(),
-                            pvRGenC = (geometry.pvRGenC ?: 0.0).setScale(),
-                            ratioR = (((geometry.pvRGenC ?: 0.0) / expectedEnergyUse) * 100).setScale(),
+                            // a~d1 최대설치시
+                            pvRArea = (geometry.pvRArea ?: 0.0).rounding(scale = 0),
+                            pvRCap = (geometry.pvRCap ?: 0.0).rounding(),
+                            pvRGenC = (geometry.pvRGenC ?: 0.0).rounding(),
+                            ratioR = (((geometry.pvRGenC ?: 0.0) / expectedEnergyUse) * 100).rounding(),
 
-                            pvSArea = (geometry.pvSArea ?: 0.0).setScale(),
-                            pvSCap = (geometry.pvSCap ?: 0.0).setScale(),
-                            pvSGenC = (geometry.pvSGenC ?: 0.0).setScale(),
-                            ratioS = (((geometry.pvSGenC ?: 0.0) / expectedEnergyUse) * 100).setScale(),
+                            // a~d2 최대설치시
+                            pvSArea = (geometry.pvSArea ?: 0.0).rounding(),
+                            pvSCap = (geometry.pvSCap ?: 0.0).rounding(),
+                            pvSGenC = (geometry.pvSGenC ?: 0.0).rounding(),
+                            ratioS = (((geometry.pvSGenC ?: 0.0) / expectedEnergyUse) * 100).rounding(),
 
-                            pvEArea = (geometry.pvEArea ?: 0.0).setScale(),
-                            pvECap = (geometry.pvECap ?: 0.0).setScale(),
-                            pvEGenC = (geometry.pvEGenC ?: 0.0).setScale(),
-                            ratioE = (((geometry.pvEGenC ?: 0.0) / expectedEnergyUse) * 100).setScale(),
+                            // a~d3 최대설치시
+                            pvEArea = (geometry.pvEArea ?: 0.0).rounding(),
+                            pvECap = (geometry.pvECap ?: 0.0).rounding(),
+                            pvEGenC = (geometry.pvEGenC ?: 0.0).rounding(),
+                            ratioE = (((geometry.pvEGenC ?: 0.0) / expectedEnergyUse) * 100).rounding(),
 
-                            pvWGenC = pvWGenC.setScale(),
-                            pvWCap = pvWCap.setScale(),
-                            pvWArea = pvWArea.setScale(),
-                            ratioW = ratioW.setScale()
+                            // a4~d4
+                            pvWGenC = pvWGenC.rounding(),
+                            pvWCap = pvWCap.rounding(),
+                            pvWArea = pvWArea.rounding(scale = 0),
+                            ratioW = ratioW.rounding()
 
                     )
                 }
@@ -181,35 +208,35 @@ class GeometryResponse(
 
             return GeometryResponse(
                     id = geometry.id,
-                    totArea = geometry.totArea.setScale(),
+                    totArea = geometry.totArea.rounding(),
                     bldUse = geometry.bldUse,
                     jusoOld = geometry.jusoOld,
                     jusoNew = geometry.jusoNew,
                     bldName = geometry.bldNm,
-                    bldH = geometry.bldH.setScale(),
-                    sedae = geometry.sedae.setScale(),
+                    bldH = geometry.bldH.rounding(),
+                    sedae = geometry.sedae.rounding(),
                     maxInstall = if (optInstallInfo == null) InstallInfo() else InstallInfo(
-                            pvRArea = geometry.pvRArea?.setScale() ?: 0.0,
-                            pvSArea = geometry.pvSArea?.setScale() ?: 0.0,
-                            pvEArea = geometry.pvEArea?.setScale() ?: 0.0,
-                            pvWArea = geometry.pvWArea?.setScale() ?: 0.0,
-                            pvRCap = geometry.pvRCap?.setScale() ?: 0.0,
-                            pvSCap = geometry.pvSCap?.setScale() ?: 0.0,
-                            pvECap = geometry.pvECap?.setScale() ?: 0.0,
-                            pvWCap = geometry.pvWCap?.setScale() ?: 0.0,
-                            pvRGenC = geometry.pvRGenC?.setScale() ?: 0.0,
-                            pvSGenC = geometry.pvSGenC?.setScale() ?: 0.0,
-                            pvEGenC = geometry.pvEGenC?.setScale() ?: 0.0,
-                            pvWGenC = geometry.pvWGenC?.setScale() ?: 0.0,
-                            ratioR = ((geometry.pvRGenC ?: 0.0) / expectedEnergyUse * 100).setScale(),
-                            ratioS = ((geometry.pvSGenC ?: 0.0) / expectedEnergyUse * 100).setScale(),
-                            ratioE = ((geometry.pvEGenC ?: 0.0) / expectedEnergyUse * 100).setScale(),
-                            ratioW = ((geometry.pvWGenC ?: 0.0) / expectedEnergyUse * 100).setScale()
+                            pvRArea = geometry.pvRArea?.rounding() ?: 0.0,
+                            pvSArea = geometry.pvSArea?.rounding() ?: 0.0,
+                            pvEArea = geometry.pvEArea?.rounding() ?: 0.0,
+                            pvWArea = geometry.pvWArea?.rounding() ?: 0.0,
+                            pvRCap = geometry.pvRCap?.rounding() ?: 0.0,
+                            pvSCap = geometry.pvSCap?.rounding() ?: 0.0,
+                            pvECap = geometry.pvECap?.rounding() ?: 0.0,
+                            pvWCap = geometry.pvWCap?.rounding() ?: 0.0,
+                            pvRGenC = geometry.pvRGenC?.rounding() ?: 0.0,
+                            pvSGenC = geometry.pvSGenC?.rounding() ?: 0.0,
+                            pvEGenC = geometry.pvEGenC?.rounding() ?: 0.0,
+                            pvWGenC = geometry.pvWGenC?.rounding() ?: 0.0,
+                            ratioR = ((geometry.pvRGenC ?: 0.0) / expectedEnergyUse * 100).rounding(),
+                            ratioS = ((geometry.pvSGenC ?: 0.0) / expectedEnergyUse * 100).rounding(),
+                            ratioE = ((geometry.pvEGenC ?: 0.0) / expectedEnergyUse * 100).rounding(),
+                            ratioW = ((geometry.pvWGenC ?: 0.0) / expectedEnergyUse * 100).rounding()
                     ),
                     optInstall = optInstallInfo ?: InstallInfo(),
                     isInstallRequired = optInstallInfo != null,
                     gltfUrl = geometry.gltfUrl ?: "",
-                    requiredRatio = (requiredRatio * 100).setScale(),
+                    requiredRatio = (requiredRatio * 100).rounding(),
             )
         }
     }
