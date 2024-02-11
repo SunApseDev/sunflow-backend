@@ -183,7 +183,7 @@ class GeometryResponse(
                             pvEGenC = pvEGenC.rounding(),
                             pvECap = pvECap.rounding(),
                             pvEArea = pEArea.rounding(scale = 0), // a3
-                            ratioE = ratioE.rounding(), // d3
+                            ratioE = (ratioE * 100).rounding(), // d3
 
                             // a1~d1 최대 설치시와 동일
                             pvRArea = geometry.pvRArea?.rounding() ?: 0.0,
