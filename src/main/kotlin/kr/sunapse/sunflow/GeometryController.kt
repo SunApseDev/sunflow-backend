@@ -277,20 +277,20 @@ class GeometryResponse(
                         val bipv설치면적 = (geometry.pvSArea ?: 0.0) + (geometry.pvEArea ?: 0.0) + (geometry.pvWArea ?: 0.0)
                         val bipv설치용량최적 = optInstallInfo.let { it.pvSCap + it.pvECap + it.pvWCap }
 
-                        val pvL1 = pv설치용량.roundToLong() * 2_000_000
-                        val bipvL1 = bipv설치용량.roundToLong() * 6_500_000
-                        val bipvL2 = bipv설치면적.roundToLong() * 70_000
-                        val bipvL3 = (bipv설치용량 - bipv설치용량최적).roundToLong() * 4_000_000
+                        val pvL1 = (pv설치용량 * 2_000_000).roundToLong()
+                        val bipvL1 = (bipv설치용량 * 6_500_000).roundToLong()
+                        val bipvL2 = (bipv설치면적 * 70_000).roundToLong()
+                        val bipvL3 = ((bipv설치용량 - bipv설치용량최적) * 4_000_000).roundToLong()
                         val pvC = pv설치용량 * 3.6 * 365
                         val bipvC = bipv설치용량 * 3.6 * 365
-                        val pvSMP = pvC.roundToLong() * 139
-                        val bipvSMP = bipvC.roundToLong() * 139
+                        val pvSMP = (pvC * 139).roundToLong()
+                        val bipvSMP = (bipvC * 139).roundToLong()
                         val pvREC = (pvC * 82.216 * 1.4).roundToLong()
                         val bipvREC = (bipvC * 82.216 * 1.4).roundToLong()
-                        val pvSaving = pvC.roundToLong() * 120
-                        val bipvSaving = bipvC.roundToLong() * 120
-                        val pvManage = pv설치면적.roundToLong() * 5775
-                        val bipvManage = bipv설치면적.roundToLong() * 5775
+                        val pvSaving = (pvC * 120).roundToLong()
+                        val bipvSaving = (bipvC * 120).roundToLong()
+                        val pvManage = (pv설치면적 * 5775).roundToLong()
+                        val bipvManage = (bipv설치면적 * 5775).roundToLong()
 
                         val pvR = pvL1
                         val bipvR = bipvL1 - bipvL2 - bipvL3
@@ -330,13 +330,13 @@ class GeometryResponse(
                         val 최적bipv설치용량 = optInstallInfo.let { it.pvSCap + it.pvECap + it.pvWCap } ?: 0.0
                         val 최적bipv설치면적 = optInstallInfo.let { it.pvSArea + it.pvEArea + it.pvWArea } ?: 0.0
 
-                        val pvL1 = 최적pv설치용량.roundToLong() * 2_000_000
-                        val bipvL1 = 최적bipv설치용량.roundToLong() * 6_500_000
-                        val bipvL2 = 최적bipv설치면적.roundToLong() * 70_000
+                        val pvL1 = (최적pv설치용량 * 2_000_000).roundToLong()
+                        val bipvL1 = (최적bipv설치용량 * 6_500_000).roundToLong()
+                        val bipvL2 = (최적bipv설치면적 * 70_000).roundToLong()
                         val pvC = 최적pv설치용량 * 3.6 * 365
                         val bipvC = 최적bipv설치용량 * 3.6 * 365
-                        val pvSMP = pvC.roundToLong() * 139
-                        val bipvSMP = bipvC.roundToLong() * 139
+                        val pvSMP = (pvC * 139).roundToLong()
+                        val bipvSMP = (bipvC * 139).roundToLong()
                         val pvREC = (pvC * 82.216 * 1.4).roundToLong()
                         val bipvREC = (bipvC * 82.216 * 1.4).roundToLong()
                         val pvSaving = (pvC * 120).roundToLong()
