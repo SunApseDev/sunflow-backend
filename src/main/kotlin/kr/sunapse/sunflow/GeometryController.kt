@@ -321,8 +321,8 @@ class GeometryResponse(
                     optEconomics = run {
                         val 최적pv설치용량: Double = optInstallInfo.pvRCap ?: 0.0
                         val 최적pv설치면적 = optInstallInfo.pvRArea ?: 0.0
-                        val 최적bipv설치면적 = optInstallInfo.let { it.pvSCap + it.pvECap + it.pvWCap } ?: 0.0
-                        val 최적bipv설치용량 = optInstallInfo.let { it.pvSArea + it.pvEArea + it.pvWArea } ?: 0.0
+                        val 최적bipv설치용량 = optInstallInfo.let { it.pvSCap + it.pvECap + it.pvWCap } ?: 0.0
+                        val 최적bipv설치면적 = optInstallInfo.let { it.pvSArea + it.pvEArea + it.pvWArea } ?: 0.0
 
                         val pvL1 = 최적pv설치용량.roundToLong() * 2_000_000
                         val bipvL1 = 최적bipv설치용량.roundToLong() * 6_500_000
