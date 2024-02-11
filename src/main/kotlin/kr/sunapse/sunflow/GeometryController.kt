@@ -85,13 +85,33 @@ class GeometryResponse(
             // A
             val expectedEnergyUse = 230 * geometry.totArea
 
-            // todo : 현재 비주거 케이스만 다뤘음. 공공과 주거에 대해서도 다뤄야함.
             // B
-            val requiredRatio: Double = when {
-                geometry.totArea >= 100000.0 -> 0.145
-                geometry.totArea >= 10000.0 -> 0.135
-                geometry.totArea >= 3000.0 -> 0.125
-                else -> 0.0
+            val buildingPurpose = PurposeChecker.checkPurpose(geometry.bldUse)
+
+            val requiredRatio : Double = when(buildingPurpose){
+                BuildingPurpose.주거 -> {
+                    when {
+                        geometry.sedae >= 1000 -> 0.105
+                        geometry.sedae >= 300 -> 0.10
+                        geometry.sedae >= 30 -> 0.095
+                        else -> 0.0
+                    }
+                }
+                BuildingPurpose.비주거 -> {
+                    when {
+                        geometry.totArea >= 100000.0 -> 0.145
+                        geometry.totArea >= 10000.0 -> 0.135
+                        geometry.totArea >= 3000.0 -> 0.125
+                        else -> 0.0
+                    }
+                }
+                BuildingPurpose.공공 -> {
+                    when {
+                        geometry.totArea >= 500 -> 0.34
+                        else -> 0.0
+                    }
+                }
+                BuildingPurpose.Nothing -> 0.0
             }
 
             // A * B
