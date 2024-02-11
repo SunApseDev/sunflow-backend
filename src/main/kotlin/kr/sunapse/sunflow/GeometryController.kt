@@ -237,7 +237,7 @@ class GeometryResponse(
                             pvWGenC = pvWGenC.rounding(),
                             pvWCap = pvWCap.rounding(),
                             pvWArea = pvWArea.rounding(scale = 0),
-                            ratioW = ratioW.rounding()
+                            ratioW = (ratioW * 100).rounding()
 
                     )
                 }
