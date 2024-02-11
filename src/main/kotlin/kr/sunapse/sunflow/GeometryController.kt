@@ -117,9 +117,29 @@ class GeometryResponse(
                 BuildingPurpose.Nothing -> 0.0
             }
 
+            val maxInstall = InstallInfo(
+                    pvRArea = geometry.pvRArea?.rounding() ?: 0.0,
+                    pvSArea = geometry.pvSArea?.rounding() ?: 0.0,
+                    pvEArea = geometry.pvEArea?.rounding() ?: 0.0,
+                    pvWArea = geometry.pvWArea?.rounding() ?: 0.0,
+                    pvRCap = geometry.pvRCap?.rounding() ?: 0.0,
+                    pvSCap = geometry.pvSCap?.rounding() ?: 0.0,
+                    pvECap = geometry.pvECap?.rounding() ?: 0.0,
+                    pvWCap = geometry.pvWCap?.rounding() ?: 0.0,
+                    pvRGenC = geometry.pvRGenC?.rounding() ?: 0.0,
+                    pvSGenC = geometry.pvSGenC?.rounding() ?: 0.0,
+                    pvEGenC = geometry.pvEGenC?.rounding() ?: 0.0,
+                    pvWGenC = geometry.pvWGenC?.rounding() ?: 0.0,
+                    ratioR = ((geometry.pvRGenC ?: 0.0) / expectedEnergyUse * 100).rounding(),
+                    ratioS = ((geometry.pvSGenC ?: 0.0) / expectedEnergyUse * 100).rounding(),
+                    ratioE = ((geometry.pvEGenC ?: 0.0) / expectedEnergyUse * 100).rounding(),
+                    ratioW = ((geometry.pvWGenC ?: 0.0) / expectedEnergyUse * 100).rounding()
+            )
+
             // A * B
             val expectedRequiredEnergyProduce = expectedEnergyUse * requiredRatio
-            val optInstallInfo: InstallInfo? = when {
+
+            val optInstallInfo: InstallInfo = when {
                 // A*B < x
                 expectedRequiredEnergyProduce < (geometry.pvRGenC ?: 0.0) -> {
 
@@ -221,14 +241,12 @@ class GeometryResponse(
 
                     )
                 }
-
+                // A * B > x+y+z+w
                 else -> {
-                    // 설치 의무 없음
-
-                    null
+                    // 모두 설치해도 의무비율을 만족할 수 없음 !
+                    maxInstall
                 }
             }
-
 
 
 
@@ -241,26 +259,9 @@ class GeometryResponse(
                     bldName = geometry.bldNm,
                     bldH = geometry.bldH.rounding(),
                     sedae = geometry.sedae.rounding(),
-                    maxInstall = if (optInstallInfo == null) InstallInfo() else InstallInfo(
-                            pvRArea = geometry.pvRArea?.rounding() ?: 0.0,
-                            pvSArea = geometry.pvSArea?.rounding() ?: 0.0,
-                            pvEArea = geometry.pvEArea?.rounding() ?: 0.0,
-                            pvWArea = geometry.pvWArea?.rounding() ?: 0.0,
-                            pvRCap = geometry.pvRCap?.rounding() ?: 0.0,
-                            pvSCap = geometry.pvSCap?.rounding() ?: 0.0,
-                            pvECap = geometry.pvECap?.rounding() ?: 0.0,
-                            pvWCap = geometry.pvWCap?.rounding() ?: 0.0,
-                            pvRGenC = geometry.pvRGenC?.rounding() ?: 0.0,
-                            pvSGenC = geometry.pvSGenC?.rounding() ?: 0.0,
-                            pvEGenC = geometry.pvEGenC?.rounding() ?: 0.0,
-                            pvWGenC = geometry.pvWGenC?.rounding() ?: 0.0,
-                            ratioR = ((geometry.pvRGenC ?: 0.0) / expectedEnergyUse * 100).rounding(),
-                            ratioS = ((geometry.pvSGenC ?: 0.0) / expectedEnergyUse * 100).rounding(),
-                            ratioE = ((geometry.pvEGenC ?: 0.0) / expectedEnergyUse * 100).rounding(),
-                            ratioW = ((geometry.pvWGenC ?: 0.0) / expectedEnergyUse * 100).rounding()
-                    ),
-                    optInstall = optInstallInfo ?: InstallInfo(),
-                    isInstallRequired = optInstallInfo != null,
+                    maxInstall = maxInstall,
+                    optInstall = optInstallInfo, // 모두 설치해도 의무비율 만족 못하면 최적화에도 최대치를 넣어 보여줌
+                    isInstallRequired = requiredRatio > 0,
                     gltfUrl = geometry.gltfUrl ?: "",
                     requiredRatio = (requiredRatio * 100).rounding(),
                     maxEconomics = run {
@@ -268,7 +269,7 @@ class GeometryResponse(
                         val pv설치면적 = geometry.pvRArea ?: 0.0
                         val bipv설치용량 = (geometry.pvSCap ?: 0.0) + (geometry.pvECap ?: 0.0) + (geometry.pvWCap ?: 0.0)
                         val bipv설치면적 = (geometry.pvSArea ?: 0.0) + (geometry.pvEArea ?: 0.0) + (geometry.pvWArea ?: 0.0)
-                        val bipv설치용량최적 = optInstallInfo?.let { it.pvSCap + it.pvECap + it.pvWCap } ?: 0.0
+                        val bipv설치용량최적 = optInstallInfo.let { it.pvSCap + it.pvECap + it.pvWCap }
 
                         val pvL1 = pv설치용량.roundToLong() * 2000000
                         val bipvL1 = bipv설치용량.roundToLong() * 6500000
@@ -318,10 +319,10 @@ class GeometryResponse(
                                 )
                     },
                     optEconomics = run {
-                        val 최적pv설치용량: Double = optInstallInfo?.pvRCap ?: 0.0
-                        val 최적pv설치면적 = optInstallInfo?.pvRArea ?: 0.0
-                        val 최적bipv설치면적 = optInstallInfo?.let { it.pvSCap + it.pvECap + it.pvWCap } ?: 0.0
-                        val 최적bipv설치용량 = optInstallInfo?.let { it.pvSArea + it.pvEArea + it.pvWArea } ?: 0.0
+                        val 최적pv설치용량: Double = optInstallInfo.pvRCap ?: 0.0
+                        val 최적pv설치면적 = optInstallInfo.pvRArea ?: 0.0
+                        val 최적bipv설치면적 = optInstallInfo.let { it.pvSCap + it.pvECap + it.pvWCap } ?: 0.0
+                        val 최적bipv설치용량 = optInstallInfo.let { it.pvSArea + it.pvEArea + it.pvWArea } ?: 0.0
 
                         val pvL1 = 최적pv설치용량.roundToLong() * 2_000_000
                         val bipvL1 = 최적bipv설치용량.roundToLong() * 6_500_000
