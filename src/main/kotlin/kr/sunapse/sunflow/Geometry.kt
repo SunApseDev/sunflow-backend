@@ -45,41 +45,41 @@ data class Geometry(
 //        val eUseE : String?,
         @Column(name = "gltf_url")
         val gltfUrl: String?,
-        @Column(name = "pv_r_area")
-        val pvRArea: Double?,
         @Column(name = "pv_s_area")
+        val pvRArea: Double?,
+        @Column(name = "pv_r_area")
         val pvSArea: Double?,
         @Column(name = "pv_e_area")
         val pvEArea: Double?,
         @Column(name = "pv_w_area")
         val pvWArea: Double?,
-        @Column(name = "pv_r_num")
-        val pvRNum: Double?,
         @Column(name = "pv_s_num")
+        val pvRNum: Double?,
+        @Column(name = "pv_r_num")
         val pvSNum: Long?,
         @Column(name = "pv_e_num")
         val pvENum: Long?,
         @Column(name = "pv_w_num")
         val pvWNum: Long?,
-        @Column(name = "pv_r_cap")
-        val pvRCap: Double?,
         @Column(name = "pv_s_cap")
+        val pvRCap: Double?,
+        @Column(name = "pv_r_cap")
         val pvSCap: Double?,
         @Column(name = "pv_e_cap")
         val pvECap: Double?,
         @Column(name = "pv_w_cap")
         val pvWCap: Double?,
-        @Column(name = "pv_r_gen_c")
-        val pvRGenC: Double?,
         @Column(name = "pv_s_gen_c")
+        val pvRGenC: Double?,
+        @Column(name = "pv_r_gen_c")
         val pvSGenC: Double?,
         @Column(name = "pv_e_gen_c")
         val pvEGenC: Double?,
         @Column(name = "pv_w_gen_c")
         val pvWGenC: Double?,
-        @Column(name = "pv_r_gen_e")
-        val pvRGenE: Double?,
         @Column(name = "pv_s_gen_e")
+        val pvRGenE: Double?,
+        @Column(name = "pv_r_gen_e")
         val pvSGenE: Double?,
         @Column(name = "pv_e_gen_e")
         val pvEGenE: Double?,
