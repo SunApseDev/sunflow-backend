@@ -39,18 +39,6 @@ class GeometryController(private val geometryService: GeometryService) {
             return GeometryResponse.of(maxAreaGeo)
         }
     }
-
-    @PostMapping("/geometry/economics")
-    fun getGeometryEconomics(@RequestBody request: GeometrySearchBody): GeometryResponse {
-
-        val geos = geometryService.getByJusoOld(request.jusoOld.trim())
-        if (geos.size < 1) {
-            return GeometryResponse()
-        } else {
-            val maxAreaGeo = geos.maxBy { geo -> geo.totArea }
-
-        }
-    }
 }
 
 
@@ -307,7 +295,52 @@ class GeometryResponse(
                                 )
                     },
                     optEconomics = run {
+                        val 최적pv설치용량 : Double = optInstallInfo?.pvRCap ?: 0.0
+                        val 최적pv설치면적 = optInstallInfo?.pvRArea ?: 0.0
+                        val 최적bipv설치면적 = optInstallInfo?.let { it.pvSCap + it.pvECap + it.pvWCap } ?: 0.0
+                        val 최적bipv설치용량 = optInstallInfo?.let { it.pvSArea + it.pvEArea + it.pvWArea } ?: 0.0
 
+                        val pvL1 = 최적pv설치용량.roundToLong() * 2_000_000
+                        val bipvL1 = 최적bipv설치용량.roundToLong() * 6_500_000
+                        val bipvL2 = 최적bipv설치면적.roundToLong() * 70_000
+                        val pvC = 최적pv설치용량 * 3.6 * 365
+                        val bipvC = 최적bipv설치용량 * 3.6 * 365
+                        val pvSMP = pvC.roundToLong() * 139
+                        val bipvSMP = bipvC.roundToLong() * 139
+                        val pvREC = (pvC * 82.216 * 1.4).roundToLong()
+                        val bipvREC = (bipvC * 82.216 * 1.4).roundToLong()
+                        val pvSaving = (pvC * 120).roundToLong()
+                        val bipvSaving = (bipvC * 120).roundToLong()
+                        val pvManage = (최적pv설치면적 * 5775).roundToLong()
+                        val bipvManage = (최적bipv설치면적 * 5775).roundToLong()
+                        val pvRevenue = pvSMP + pvREC + pvSaving - pvManage
+                        val bipvRevenue = bipvSMP + bipvREC + bipvSaving - bipvManage
+                        val pvR = pvL1
+                        val bipvR = bipvL1 - bipvL2
+                        GeometryEconomicsInfo(
+                                pvL1 = pvL1,
+                                bipvL1 = bipvL1,
+                                bipvL2 = bipvL2,
+                                pvR = pvR,
+                                bipvR = bipvR,
+                                pvC = pvC,
+                                bipvC= bipvC,
+                                pvSMP = pvSMP,
+                                bipvSMP = bipvSMP,
+                                pvREC = pvREC,
+                                bipvREC = bipvREC,
+                                pvSaving = pvSaving,
+                                bipvSaving = bipvSaving,
+                                pvManage = pvManage,
+                                bipvManage = bipvManage,
+                                pvRevenue = pvRevenue,
+                                bipvRevenue = bipvRevenue,
+                                pvROI =   pvR / pvRevenue + 1,
+                                bipvROI = bipvR / bipvRevenue + 1,
+                                sumROI = (pvR + bipvR) / (pvRevenue + bipvRevenue) + 1,
+                                pvMargin10y = (pvRevenue * 9.647 - pvManage * 0.353 - pvR).roundToLong(),
+                                bipvMargin10y = (bipvRevenue * 9.647 - bipvManage * 0.353 - bipvR).roundToLong(),
+                        )
                     }
             )
         }
