@@ -286,16 +286,16 @@ class GeometryResponse(
                                 bipvManage = bipvManage,
                                 pvRevenue = pvRevenue,
                                 bipvRevenue = bipvRevenue,
-                                pvROI = (pvR / pvRevenue) + 1,
-                                bipvROI = (bipvR / bipvRevenue) + 1,
-                                sumROI = (pvR + bipvR) / (pvRevenue + bipvRevenue) + 1,
+                                pvROI = if (pvRevenue > 0) (pvR / pvRevenue) + 1 else 0,
+                                bipvROI = if (bipvRevenue > 0) (bipvR / bipvRevenue) + 1 else 0,
+                                sumROI = if (pvRevenue + bipvRevenue > 0) (pvR + bipvR) / (pvRevenue + bipvRevenue) + 1 else 0,
                                 pvMargin10y = (9.647 * pvRevenue - 0.353 * pvManage - pvR).roundToLong(),
                                 bipvMargin10y = (9.647 * bipvRevenue - 0.353 * bipvManage - bipvR).roundToLong(),
 
                                 )
                     },
                     optEconomics = run {
-                        val 최적pv설치용량 : Double = optInstallInfo?.pvRCap ?: 0.0
+                        val 최적pv설치용량: Double = optInstallInfo?.pvRCap ?: 0.0
                         val 최적pv설치면적 = optInstallInfo?.pvRArea ?: 0.0
                         val 최적bipv설치면적 = optInstallInfo?.let { it.pvSCap + it.pvECap + it.pvWCap } ?: 0.0
                         val 최적bipv설치용량 = optInstallInfo?.let { it.pvSArea + it.pvEArea + it.pvWArea } ?: 0.0
@@ -324,7 +324,7 @@ class GeometryResponse(
                                 pvR = pvR,
                                 bipvR = bipvR,
                                 pvC = pvC,
-                                bipvC= bipvC,
+                                bipvC = bipvC,
                                 pvSMP = pvSMP,
                                 bipvSMP = bipvSMP,
                                 pvREC = pvREC,
@@ -335,9 +335,9 @@ class GeometryResponse(
                                 bipvManage = bipvManage,
                                 pvRevenue = pvRevenue,
                                 bipvRevenue = bipvRevenue,
-                                pvROI =  if (pvRevenue > 0)  pvR / pvRevenue + 1 else 0,
+                                pvROI = if (pvRevenue > 0) pvR / pvRevenue + 1 else 0,
                                 bipvROI = if (bipvRevenue > 0) bipvR / bipvRevenue + 1 else 0,
-                                sumROI = (pvR + bipvR) / (pvRevenue + bipvRevenue) + 1,
+                                sumROI = if (pvRevenue + bipvRevenue > 0) (pvR + bipvR) / (pvRevenue + bipvRevenue) + 1 else 0,
                                 pvMargin10y = (pvRevenue * 9.647 - pvManage * 0.353 - pvR).roundToLong(),
                                 bipvMargin10y = (bipvRevenue * 9.647 - bipvManage * 0.353 - bipvR).roundToLong(),
                         )
