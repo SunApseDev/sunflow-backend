@@ -9,7 +9,7 @@ import kotlin.math.round
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
-fun Double.rounding(scale: Long = 1): Double {
+fun Double.rounding(scale: Long = 2): Double {
     if (scale == 0L) {
         return this.roundToInt().toDouble()
     }
@@ -271,8 +271,8 @@ class GeometryResponse(
                         val bipv설치면적 = (geometry.pvSArea ?: 0.0) + (geometry.pvEArea ?: 0.0) + (geometry.pvWArea ?: 0.0)
                         val bipv설치용량최적 = optInstallInfo.let { it.pvSCap + it.pvECap + it.pvWCap }
 
-                        val pvL1 = pv설치용량.roundToLong() * 2000000
-                        val bipvL1 = bipv설치용량.roundToLong() * 6500000
+                        val pvL1 = pv설치용량.roundToLong() * 2_000_000
+                        val bipvL1 = bipv설치용량.roundToLong() * 6_500_000
                         val bipvL2 = bipv설치면적.roundToLong() * 70_000
                         val bipvL3 = (bipv설치용량 - bipv설치용량최적).roundToLong() * 4_000_000
                         val pvC = pv설치용량 * 3.6 * 365
