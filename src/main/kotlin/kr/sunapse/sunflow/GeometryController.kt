@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestController
 import kotlin.math.pow
 import kotlin.math.round
 import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 fun Double.rounding(scale: Long = 1): Double {
     if (scale == 0L) {
@@ -37,7 +38,18 @@ class GeometryController(private val geometryService: GeometryService) {
             val maxAreaGeo = geos.maxBy { geo -> geo.totArea }
             return GeometryResponse.of(maxAreaGeo)
         }
+    }
 
+    @PostMapping("/geometry/economics")
+    fun getGeometryEconomics(@RequestBody request: GeometrySearchBody): GeometryResponse {
+
+        val geos = geometryService.getByJusoOld(request.jusoOld.trim())
+        if (geos.size < 1) {
+            return GeometryResponse()
+        } else {
+            val maxAreaGeo = geos.maxBy { geo -> geo.totArea }
+
+        }
     }
 }
 
@@ -59,6 +71,8 @@ class GeometryResponse(
         val optInstall: InstallInfo,
         val gltfUrl: String = "",
         val requiredRatio: Double,
+        val maxEconomics: GeometryEconomicsInfo,
+        val optEconomics: GeometryEconomicsInfo
 ) {
 
     constructor() : this(isInstallRequired = false,
@@ -73,7 +87,9 @@ class GeometryResponse(
             maxInstall = InstallInfo(),
             optInstall = InstallInfo(),
             gltfUrl = "",
-            requiredRatio = 0.0
+            requiredRatio = 0.0,
+            maxEconomics = GeometryEconomicsInfo(),
+            optEconomics = GeometryEconomicsInfo()
     )
 
     companion object {
@@ -205,7 +221,6 @@ class GeometryResponse(
 
 
 
-
             return GeometryResponse(
                     id = geometry.id,
                     totArea = geometry.totArea.rounding(),
@@ -237,6 +252,63 @@ class GeometryResponse(
                     isInstallRequired = optInstallInfo != null,
                     gltfUrl = geometry.gltfUrl ?: "",
                     requiredRatio = (requiredRatio * 100).rounding(),
+                    maxEconomics = run {
+                        val pv설치용량 = geometry.pvRCap ?: 0.0
+                        val pv설치면적 = geometry.pvRArea ?: 0.0
+                        val bipv설치용량 = (geometry.pvSCap ?: 0.0) + (geometry.pvECap ?: 0.0) + (geometry.pvWCap ?: 0.0)
+                        val bipv설치면적 = (geometry.pvSArea ?: 0.0) + (geometry.pvEArea ?: 0.0) + (geometry.pvWArea ?: 0.0)
+                        val bipv설치용량최적 = optInstallInfo?.let { it.pvRCap + it.pvSCap + it.pvECap } ?: 0.0
+
+                        val pvL1 = pv설치용량.roundToLong() * 2000000
+                        val bipvL1 = bipv설치용량.roundToLong() * 6500000
+                        val bipvL2 = bipv설치면적.roundToLong() * 70_000
+                        val bipvL3 = (bipv설치용량 - bipv설치용량최적).roundToLong() * 4_000_000
+                        val pvC = pv설치용량 * 3.6 * 365
+                        val bipvC = bipv설치용량 * 3.6 * 365
+                        val pvSMP = pvC.roundToLong() * 139
+                        val bipvSMP = bipvC.roundToLong() * 139
+                        val pvREC = (pvC * 82.216 * 1.4).roundToLong()
+                        val bipvREC = (bipvC * 82.216 * 1.4).roundToLong()
+                        val pvSaving = pvC.roundToLong() * 120
+                        val bipvSaving = bipvC.roundToLong() * 120
+                        val pvManage = pv설치면적.roundToLong() * 5775
+                        val bipvManage = bipv설치면적.roundToLong() * 5775
+
+                        val pvR = pvL1
+                        val bipvR = bipvL1 - bipvL2 - bipvL3
+
+                        val pvRevenue = pvSMP + pvREC + pvSaving - pvManage
+                        val bipvRevenue = bipvSMP + bipvREC + bipvSaving - bipvManage
+                        GeometryEconomicsInfo(
+                                pvL1 = pvL1,
+                                bipvL1 = bipvL1,
+                                bipvL2 = bipvL2,
+                                bipvL3 = bipvL3,
+                                pvR = pvR,
+                                bipvR = bipvR,
+                                pvC = pvC,
+                                bipvC = bipvC,
+                                pvSMP = pvSMP,
+                                bipvSMP = bipvSMP,
+                                pvREC = pvREC,
+                                bipvREC = bipvREC,
+                                pvSaving = pvSaving,
+                                bipvSaving = bipvSaving,
+                                pvManage = pvManage,
+                                bipvManage = bipvManage,
+                                pvRevenue = pvRevenue,
+                                bipvRevenue = bipvRevenue,
+                                pvROI = (pvR / pvRevenue) + 1,
+                                bipvROI = (bipvR / bipvRevenue) + 1,
+                                sumROI = (pvR + bipvR) / (pvRevenue + bipvRevenue) + 1,
+                                pvMargin10y = (9.647 * pvRevenue - 0.353 * pvManage - pvR).roundToLong(),
+                                bipvMargin10y = (9.647 * bipvRevenue - 0.353 * bipvManage - bipvR).roundToLong(),
+
+                                )
+                    },
+                    optEconomics = run {
+
+                    }
             )
         }
     }
@@ -259,4 +331,49 @@ data class InstallInfo(
         val ratioS: Double = 0.0,
         val ratioE: Double = 0.0,
         val ratioW: Double = 0.0
+)
+
+
+class GeometryEconomicsInfo(
+        pvL1: Long = 0,
+        bipvL1: Long = 0,
+//        sumL1: Long = 0,
+        bipvL2: Long = 0,
+//        sumL2: Long = 0,
+        bipvL3: Long = 0,
+//        sumL3: Long = 0,
+        pvR: Long = 0,
+        bipvR: Long = 0,
+//        sumR: Long = 0,
+        // 예상 발전량
+        pvC: Double = 0.0,
+        bipvC: Double = 0.0,
+//        sumC: Double = 0.0,
+        // SMP
+        pvSMP: Long = 0,
+        bipvSMP: Long = 0,
+//        sumSMP: Long = 0,
+        // REC
+        pvREC: Long = 0,
+        bipvREC: Long = 0,
+//        sumREC: Long = 0,
+        // 전력생산절감비
+        pvSaving: Long = 0,
+        bipvSaving: Long = 0,
+//        sumSaving: Long = 0,
+        // 유지관리비
+        pvManage: Long = 0,
+        bipvManage: Long = 0,
+        // 연별수익
+        pvRevenue: Long = 0,
+        bipvRevenue: Long = 0,
+//        sumRevenue: Long = 0,
+        // ROI
+        pvROI: Long = 0,
+        bipvROI: Long = 0,
+        sumROI: Long = 0,
+        // 이윤
+        pvMargin10y: Long = 0,
+        bipvMargin10y: Long = 0,
+//        sumMargin10y: Long = 0
 )
