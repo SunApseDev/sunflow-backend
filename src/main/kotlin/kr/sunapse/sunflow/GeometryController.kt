@@ -82,8 +82,11 @@ class GeometryResponse(
 
     companion object {
         fun of(geometry: Geometry): GeometryResponse {
+
+            val bldCategory = BldCategoryChecker.check(geometry.bldUse)
+
             // A
-            val expectedEnergyUse = 230 * geometry.totArea
+            val expectedEnergyUse = bldCategory.unitEnegryAmount * geometry.totArea
 
             // B
             val buildingPurpose = PurposeChecker.checkPurpose(geometry.bldUse)
